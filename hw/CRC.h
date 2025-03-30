@@ -1,8 +1,9 @@
 #ifndef __CRC_H
 #define __CRC_H
 
-#include <stdio.h>
 #include <stdbool.h>
+
+#include "user.h"
 
 static const unsigned short CRC_16_CCITT_tab[256] = {
     0x0000, 0x1189, 0x2312, 0x329B, 0x4624, 0x57AD, 0x6536, 0x74BF,
@@ -191,10 +192,11 @@ static CRC_info_t CRC_16_MODBUS = {.len = 16, .poly = 0x8005, .init = 0xFFFF, .x
                   CRC_32_BZIP2 = {.len = 32, .poly = 0x04C11DB7, .init = 0xFFFFFFFF, .xorout = 0xFFFFFFFF, .refin = false, .refout = false, .tab32 = CRC_32_BZIP2_tab},
                   CRC_32_JAMCRC = {.len = 32, .poly = 0x04C11DB7, .init = 0xFFFFFFFF, .xorout = 0, .refin = true, .refout = true, .tab32 = CRC_32_JAMCRC_tab};
 
-static inline unsigned CRC_Calc(CRC_info_t *CRC_info, const unsigned char str[], size_t len)
+// CRC calc by byte
+static inline unsigned CRCsw_Calc(CRC_info_t *CRC_info, const unsigned char str[], unsigned char len)
 {
     unsigned CRC_val = CRC_info->init;
-    for (size_t cnt = 0; cnt < len; cnt++)
+    for (unsigned char cnt = 0; cnt < len; cnt++)
         switch (CRC_info->len)
         {
         case 16:
@@ -212,5 +214,83 @@ static inline unsigned CRC_Calc(CRC_info_t *CRC_info, const unsigned char str[],
         }
     return CRC_val ^ CRC_info->xorout;
 }
+
+// hw CRC
+#ifdef CRC
+
+#define CRC_REFIN_NONE 0x00
+#define CRC_REFIN_BYTE 0x01
+#define CRC_REFIN_HALFWORD 0x10
+#define CRC_REFIN_WORD 0x11
+
+#define CRC_POLY_32b 0b00
+#define CRC_POLY_16b 0b01
+#define CRC_POLY_8b 0b10
+#define CRC_POLY_7b 0b11
+
+#define CRC_DATA_BYTE 1
+#define CRC_DATA_HALFWORD 2
+#define CRC_DATA_WORD 4
+
+static inline void CRC_Init(bool refout_sts, unsigned CRC_REFIN_size, unsigned char CRC_POLY_size, unsigned init, unsigned poly)
+{
+    CRC->POL = poly;
+    CRC->INIT = init;
+    CRC->CR = refout_sts << 7 |
+              CRC_REFIN_size << 5 |
+              CRC_POLY_size << 3;
+}
+
+static inline unsigned CRC_Calc(unsigned char data[], unsigned char len, unsigned char CRC_DATA_size)
+{
+    CRC->CR |= 1; // reset CRC val
+    for (unsigned char cnt = 0; cnt < len;)
+    {
+        switch (CRC_DATA_size)
+        {
+        case CRC_DATA_BYTE:
+        {
+            CRC->DR = data[cnt];
+            cnt += CRC_DATA_BYTE;
+            break;
+        }
+        case CRC_DATA_HALFWORD:
+        {
+            if (cnt + CRC_DATA_HALFWORD < len)
+            {
+                CRC->DR = *(unsigned short *)&data[cnt];
+                cnt += CRC_DATA_HALFWORD;
+            }
+            else
+            {
+                CRC->DR = data[cnt];
+                cnt += CRC_DATA_BYTE;
+            }
+            break;
+        }
+        case CRC_DATA_WORD:
+        {
+            if (cnt + CRC_DATA_WORD < len)
+            {
+                CRC->DR = *(unsigned *)&data[cnt];
+                cnt += CRC_DATA_WORD;
+            }
+            else if (cnt + CRC_DATA_HALFWORD < len)
+            {
+                CRC->DR = *(unsigned short *)&data[cnt];
+                cnt += CRC_DATA_HALFWORD;
+            }
+            else
+            {
+                CRC->DR = data[cnt];
+                cnt += CRC_DATA_BYTE;
+            }
+            break;
+        }
+        }
+    }
+    return CRC->DR;
+}
+#endif
 
 #endif

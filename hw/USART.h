@@ -108,7 +108,7 @@ static inline void Modbus_UART_Read(USART_info_t *USART_info, unsigned char slav
                                addr,
                                num << 8,
                                num};
-    *(unsigned short *)&TxData[6] = CRC_Calc(&CRC_16_MODBUS, TxData, 6);
+    *(unsigned short *)&TxData[6] = CRCsw_Calc(&CRC_16_MODBUS, TxData, 6);
 
     UART_SendArray(USART_info, TxData, 8);
 }
@@ -127,7 +127,7 @@ static inline void Modbus_UART_WriteSgl(USART_info_t *USART_info, unsigned char 
         TxData[4] = val << 8;
         TxData[5] = val;
     }
-    *(unsigned short *)&TxData[6] = CRC_Calc(&CRC_16_MODBUS, TxData, 6);
+    *(unsigned short *)&TxData[6] = CRCsw_Calc(&CRC_16_MODBUS, TxData, 6);
 
     UART_SendArray(USART_info, TxData, 8);
 }

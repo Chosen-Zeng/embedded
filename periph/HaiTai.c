@@ -102,7 +102,7 @@ void HaiTai_RS485_SendCmd(USART_info_t *UART_info, unsigned char ID, unsigned ch
     }
     }
 
-    *(unsigned short *)&HaiTai[arrID].TxData[4 + HaiTai[arrID].TxData[4] + 1] = CRC_16_Cal(&CRC_16_Modbus, HaiTai[arrID].TxData, 5 + HaiTai[arrID].TxData[4]);
+    *(unsigned short *)&HaiTai[arrID].TxData[4 + HaiTai[arrID].TxData[4] + 1] = CRCsw_Calc(&CRC_16_Modbus, HaiTai[arrID].TxData, 5 + HaiTai[arrID].TxData[4]);
 
     UART_SendArray(UART_info, HaiTai[arrID].TxData, 7 + HaiTai[arrID].TxData[4]);
 }

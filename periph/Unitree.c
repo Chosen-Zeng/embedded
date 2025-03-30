@@ -18,7 +18,7 @@ void GO_M8010_6_SendParam(USART_info_t *UART_info, unsigned char ID)
     *(int *)&GO_M8010_6[arrID].TxData[7] = LIMIT_ABS(GO_M8010_6[arrID].ctrl.pos, GO_M8010_6_POS_LIMIT) * GO_M8010_6_fPOS;
     *(unsigned short *)&GO_M8010_6[arrID].TxData[11] = LIMIT(GO_M8010_6[arrID].ctrl.Kp, GO_M8010_6_Kp_LIMIT) * GO_M8010_6_fKp;
     *(unsigned short *)&GO_M8010_6[arrID].TxData[13] = LIMIT(GO_M8010_6[arrID].ctrl.Kd, GO_M8010_6_Kd_LIMIT) * GO_M8010_6_fKd;
-    *(unsigned short *)&GO_M8010_6[arrID].TxData[15] = CRC_Calc(&CRC_16_CCITT, GO_M8010_6[arrID].TxData, 15);
+    *(unsigned short *)&GO_M8010_6[arrID].TxData[15] = CRCsw_Calc(&CRC_16_CCITT, GO_M8010_6[arrID].TxData, 15);
 
     UART_SendArray(UART_info, GO_M8010_6[arrID].TxData, 17);
 }
@@ -29,7 +29,7 @@ void GO_M8010_6_Stop(USART_info_t *UART_info, unsigned char ID)
 
     *(unsigned short *)GO_M8010_6[arrID].TxData = GO_M8010_6_HEAD_SEND;
     GO_M8010_6[arrID].TxData[2] = ID | GO_M8010_6_MODE_STOP << 4;
-    *(unsigned short *)&GO_M8010_6[arrID].TxData[15] = CRC_Calc(&CRC_16_CCITT, GO_M8010_6[arrID].TxData, 15);
+    *(unsigned short *)&GO_M8010_6[arrID].TxData[15] = CRCsw_Calc(&CRC_16_CCITT, GO_M8010_6[arrID].TxData, 15);
 
     UART_SendArray(UART_info, GO_M8010_6[arrID].TxData, 17);
 }
@@ -106,7 +106,7 @@ void A1_SendParam(USART_info_t *UART_info, unsigned char ID)
     *(int *)&A1[arrID].TxData[16] = LIMIT_ABS(A1[arrID].ctrl.pos, A1_POS_LIMIT) * A1_fPOS_MOTOR;
     *(unsigned short *)&A1[arrID].TxData[20] = LIMIT(A1[arrID].ctrl.Kp, A1_Kp_LIMIT) * A1_fKp;
     *(unsigned short *)&A1[arrID].TxData[22] = LIMIT(A1[arrID].ctrl.Kd, A1_Kd_LIMIT) * A1_fKd;
-    *(unsigned *)&A1[arrID].TxData[30] = CRC_Calc(&CRC_32_MPEG_2, A1[arrID].TxData, 30);
+    *(unsigned *)&A1[arrID].TxData[30] = CRC_Calc(A1[arrID].TxData, 30, CRC_DATA_WORD);
 
     UART_SendArray(UART_info, A1[arrID].TxData, 34);
 }
@@ -119,7 +119,7 @@ void A1_Stop(USART_info_t *UART_info, unsigned char ID)
     A1[arrID].TxData[2] = ID;
     A1[arrID].TxData[4] = A1_MODE_STOP;
     A1[arrID].TxData[5] = 0xFF;
-    *(unsigned *)&A1[arrID].TxData[30] = CRC_Calc(&CRC_32_MPEG_2, A1[arrID].TxData, 30);
+    *(unsigned *)&A1[arrID].TxData[30] = CRC_Calc(A1[arrID].TxData, 30, CRC_DATA_WORD);
 
     UART_SendArray(UART_info, A1[arrID].TxData, 34);
 }
